@@ -128,7 +128,15 @@ def draw_qubit_grover():
 	plt.plot(0,-1,"o")
 	plt.text(-0.4,-1.1,"-|marked>")
 	
-	
+
+import matplotlib.pyplot
+from matplotlib.pyplot import figure,gca
+from matplotlib.patches import Arc
+from math import sin,cos,pi
+from qiskit.visualization import plot_bloch_vector, bloch
+from matplotlib.pyplot import text
+from qutip import *
+
 def draw_real_part():
 	points = [ [1.2,0], [0,1.2] ] # dummy points for zooming out
 	arrows = [ [1.1,0], [0,1.1] ] # coordinates for the axes
