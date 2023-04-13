@@ -345,3 +345,236 @@ def Uf_8(circuit,quantum_reg):
 	circuit.ccx(quantum_reg[2],quantum_reg[1],quantum_reg[4])
 	circuit.x(quantum_reg[2])
 	
+	
+###############################
+# nickel helpers.py
+###############################
+def contFrac(N):
+    import math
+    cf=[]
+    while True:
+        cf.append(int(N))
+        f = N - N//1
+        if f < 0.0001:  # or whatever precision you consider close enough to 0
+            break
+        N = 1/f
+        if(math.ceil(N)-N<0.0001):
+            N=round(N)
+    return cf
+
+
+def convergents(cf):
+    from fractions import Fraction 
+    c=[] 
+    cv=[]
+    
+    for i in range(len(cf)):
+        c.append(cf[i])
+        for j in range(i-1,-1,-1):
+            c[i] = 1/c[i]+ cf[j]
+        cv.append(Fraction(c[i]).limit_denominator(10000))
+    return cv
+
+
+###############################
+# nickel oracle.py
+###############################
+import random
+from qiskit import QuantumCircuit, execute, Aer, QuantumRegister, ClassicalRegister
+
+def oracle():
+    type = random.choice(["constant", "balanced"])
+    result = QuantumCircuit(2)
+    result.barrier()
+    
+    if type == "constant":
+        # we ignore the input and randomly add a not gate
+        if random.randrange(2) == 0:
+            result.x(1)
+    elif type == "balanced":
+        # making sure the output is balanced
+        result.cx(0, 1)
+        # and randomly inverting it
+        if random.randrange(2) == 0:
+            result.x(1)
+    
+    result.barrier()
+    return result
+
+import random
+from qiskit import QuantumCircuit, execute, Aer
+
+def oraclej(n):
+    result = QuantumCircuit(n+1)
+    result.barrier()
+    
+    type = random.choice(["constant", "balanced"])
+    if type == "constant":
+        # we ignore the input and randomly add a not gate
+        if random.randrange(2) == 0:
+            result.x(n)
+    else:
+        # we can add a single cnot to the circuit to have a balanced function
+        # but we decide on the control qubit randomly
+        control = random.randrange(n)
+        result.cx(control, n)
+        # randomly invert the result
+        if random.randrange(2) == 0:
+            result.x(n)
+    
+    result.barrier()
+    return result
+
+def bv_oracle():
+    s="11010"
+    n = len(s)
+    s = s[::-1] # we revert the string since s_0 is at the left according to python 
+    # and in the right according to qiskit
+    
+    circuit = QuantumCircuit(n+1)
+    circuit.barrier()
+    
+    for i in range(n):
+        if s[i] == '1':
+            circuit.cx(i, n)
+    
+    circuit.barrier()
+    return circuit
+
+def f(x):
+    if x=="000":
+        return "001"
+    elif x=="010":
+        return "001"
+    elif x=="011":
+        return "000"
+    elif x=="001":
+        return "000"
+    elif x=="100":
+        return "101"
+    elif x=="110":
+        return "001"
+    elif x=="111":
+        return "100"
+    elif x=="101":
+        return "100"
+
+def simon_oracle():
+    qreg1 = QuantumRegister(3, "register_1")
+    qreg2 = QuantumRegister(3, "register_2")
+    creg = ClassicalRegister(3)
+
+    simon_circuit = QuantumCircuit(qreg1, qreg2, creg)
+
+    #map 000 and 010 to 000
+    #Do nothing
+
+    #map 111 to 100
+    simon_circuit.mcx([0,1,2],5) 
+    simon_circuit.barrier()
+
+    #map 101 to 100
+    simon_circuit.x(1)
+    simon_circuit.mcx([0,1,2],5)
+    simon_circuit.x(1)
+    simon_circuit.barrier()
+
+    #map 110 to 110
+    simon_circuit.x(0)
+    simon_circuit.mcx([0,1,2],4)
+    simon_circuit.mcx([0,1,2],5)
+    simon_circuit.x(0)
+    simon_circuit.barrier()
+
+    #map 100 to 110
+    simon_circuit.x(0)
+    simon_circuit.x(1)
+    simon_circuit.mcx([0,1,2],4)
+    simon_circuit.mcx([0,1,2],5)
+    simon_circuit.x(0)
+    simon_circuit.x(1)
+    simon_circuit.barrier()    
+    
+    #map 001 to 010
+    simon_circuit.x(1)
+    simon_circuit.x(2)
+    simon_circuit.mcx([0,1,2],4)
+    simon_circuit.x(1)
+    simon_circuit.x(2)
+    simon_circuit.barrier()
+    
+    #map 011 to 010
+    simon_circuit.x(2)
+    simon_circuit.mcx([0,1,2],4)
+    simon_circuit.x(2)
+  
+
+    return simon_circuit
+
+
+
+
+
+###############################
+# silver quantum.py
+###############################
+import random, math
+from numpy import arcsin
+from math import pi
+
+# randomly create a 2-dimensional quantum state
+def silver_random_quantum_state():
+	first_entry = random.randrange(101)
+	first_entry = first_entry/100
+	first_entry = first_entry**0.5 
+	if random.randrange(2) == 0: 
+		first_entry = -1 * first_entry
+	second_entry = 1 - (first_entry**2)
+	second_entry = second_entry**0.5
+	if random.randrange(2) == 0: 
+		second_entry = -1 * second_entry
+	return [first_entry,second_entry]
+	
+# randomly create a 2-dimensional quantum state	
+def silver_random_quantum_state2():
+	angle_degree = random.randrange(360)
+	angle_radian = math.pi * angle_degree / 180
+	return [math.cos(angle_radian),math.sin(angle_radian)]	
+	
+# finding the angle of a 2-dimensional quantum state
+def silver_angle_quantum_state(x,y):
+	angle_radian = math.acos(x) # radian of the angle with state |0>
+	angle_degree = 360*angle_radian/(2*math.pi) # degree of the angle with state |0>
+	# if the second amplitude is negative, 
+	#     then angle is (-angle_degree)
+	#     or equivalently 360 + (-angle_degree)
+	if y<0: angle_degree = 360-angle_degree # degree of the angle
+	# else degree of the angle is the same as degree of the angle with state |0>
+	return angle_degree	
+	
+def silver_state_to_angles(current_quantum_state):
+	theta = 2*arcsin(abs(round(current_quantum_state[1],4)))
+	if(current_quantum_state[0] == 0 or current_quantum_state[1] == 0):
+		phi = 0
+	else:
+		a_prime = current_quantum_state[0]/abs(current_quantum_state[0])
+		angle_lambda = arcsin(abs(a_prime.imag))
+		if(a_prime.real < 0 and a_prime.imag >= 0):
+			angle_lambda = pi - angle_lambda
+		if(a_prime.real < 0 and a_prime.imag < 0):
+			angle_lambda = pi + angle_lambda
+		if(a_prime.real >= 0 and a_prime.imag < 0):
+			angle_lambda = 2*pi - angle_lambda
+		b_prime = current_quantum_state[1]/abs(current_quantum_state[1])
+		angle_nju = arcsin(abs(b_prime.imag))
+		if(b_prime.real < 0 and b_prime.imag >= 0):
+			angle_nju = pi - angle_nju
+		if(b_prime.real < 0 and b_prime.imag < 0):
+			angle_nju = pi + angle_nju
+		if(b_prime.real >= 0 and b_prime.imag < 0):
+			angle_nju = 2*pi - angle_nju
+		phi = angle_nju - angle_lambda
+	return [theta, phi]
+
+
+
