@@ -187,7 +187,7 @@ def draw_bloch(theta, phi):
 	# preparing the lables
 	b.ylpos = [1.1, -1.2]
 	b.xlabel = ['$\\left|0\\right>+\\left|1\\right>$', '$\\left|0\\right>-\\left|1\\right>$']
-	b.ylabel = ['$\\left|0\\right>+i\\left|1\\ri2ght>$', '$\\left|0\\right>-i\\left|1\\right>$']
+	b.ylabel = ['$\\left|0\\right>+i\\left|1\\right>$', '$\\left|0\\right>-i\\left|1\\right>$']
 	# first 6 drawn vectors will be blue, the 7th - red
 	b.vector_color = ['b','b','b','b','b','b','r']
 	# drawing vectors of orthogonal states (most popular bases), note the coordinates of vectors,
